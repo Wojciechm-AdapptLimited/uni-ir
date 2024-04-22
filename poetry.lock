@@ -568,19 +568,22 @@ marshmallow = ">=3.18.0,<4.0.0"
 typing-inspect = ">=0.4.0,<1"
 
 [[package]]
-name = "dataclasses-json-speakeasy"
-version = "0.5.11"
-description = "Easily serialize dataclasses to and from JSON."
+name = "deepdiff"
+version = "7.0.1"
+description = "Deep Difference and Search of any Python object/data. Recreate objects by adding adding deltas to each other."
 optional = false
-python-versions = ">=3.7,<4.0"
+python-versions = ">=3.8"
 files = [
-    {file = "dataclasses_json_speakeasy-0.5.11-py3-none-any.whl", hash = "sha256:ac52a069a01e8521015d682f37849bfdf056c36fa3f81497055e201fec684104"},
-    {file = "dataclasses_json_speakeasy-0.5.11.tar.gz", hash = "sha256:418a987cea2ccf4e4be662f39faa5cc79b47b147c9d1a69d6928d6a27e0c17e8"},
+    {file = "deepdiff-7.0.1-py3-none-any.whl", hash = "sha256:447760081918216aa4fd4ca78a4b6a848b81307b2ea94c810255334b759e1dc3"},
+    {file = "deepdiff-7.0.1.tar.gz", hash = "sha256:260c16f052d4badbf60351b4f77e8390bee03a0b516246f6839bc813fb429ddf"},
 ]
 
 [package.dependencies]
-marshmallow = ">=3.18.0,<4.0.0"
-typing-inspect = ">=0.4.0,<1"
+ordered-set = ">=4.1.0,<4.2.0"
+
+[package.extras]
+cli = ["click (==8.1.7)", "pyyaml (==6.0.1)"]
+optimize = ["orjson"]
 
 [[package]]
 name = "deprecated"
@@ -656,13 +659,13 @@ requests = ["requests (>=2.4.0,<3.0.0)"]
 
 [[package]]
 name = "emoji"
-version = "2.11.0"
+version = "2.11.1"
 description = "Emoji for Python"
 optional = false
 python-versions = "!=3.0.*,!=3.1.*,!=3.2.*,!=3.3.*,>=2.7"
 files = [
-    {file = "emoji-2.11.0-py2.py3-none-any.whl", hash = "sha256:63fc9107f06c6c2e48e5078ce9575cef98518f5ac09474f6148a43e989989582"},
-    {file = "emoji-2.11.0.tar.gz", hash = "sha256:772eaa30f4e0b1ce95148a092df4c7dc97644532c03225326b0fd05e8a9f72a3"},
+    {file = "emoji-2.11.1-py2.py3-none-any.whl", hash = "sha256:b7ba25299bbf520cc8727848ae66b986da32aee27dc2887eaea2bff07226ce49"},
+    {file = "emoji-2.11.1.tar.gz", hash = "sha256:062ff0b3154b6219143f8b9f4b3e5c64c35bc2b146e6e2349ab5f29e218ce1ee"},
 ]
 
 [package.extras]
@@ -1271,19 +1274,19 @@ text-helpers = ["chardet (>=5.1.0,<6.0.0)"]
 
 [[package]]
 name = "langchain-community"
-version = "0.0.33"
+version = "0.0.34"
 description = "Community contributed LangChain integrations."
 optional = false
 python-versions = "<4.0,>=3.8.1"
 files = [
-    {file = "langchain_community-0.0.33-py3-none-any.whl", hash = "sha256:830f0d5f4ff9638b99ca01820c26abfa4b65fa705ef89b5ce55ac9aa3a7d83af"},
-    {file = "langchain_community-0.0.33.tar.gz", hash = "sha256:bb56dbc1ef11ca09f258468e11368781adda9219e144073e30cda69496d342b2"},
+    {file = "langchain_community-0.0.34-py3-none-any.whl", hash = "sha256:bc13b21a44bbfca01bff8b35c10a26d71485b57c1d284f499b577ba6e1a5d84a"},
+    {file = "langchain_community-0.0.34.tar.gz", hash = "sha256:96e9a807d9b4777820df5a970996f6bf3ad5632137bf0f4d863bd832bdeb2b0f"},
 ]
 
 [package.dependencies]
 aiohttp = ">=3.8.3,<4.0.0"
 dataclasses-json = ">=0.5.7,<0.7"
-langchain-core = ">=0.1.43,<0.2.0"
+langchain-core = ">=0.1.45,<0.2.0"
 langsmith = ">=0.1.0,<0.2.0"
 numpy = ">=1,<2"
 PyYAML = ">=5.3"
@@ -1297,13 +1300,13 @@ extended-testing = ["aiosqlite (>=0.19.0,<0.20.0)", "aleph-alpha-client (>=2.15.
 
 [[package]]
 name = "langchain-core"
-version = "0.1.44"
+version = "0.1.45"
 description = "Building applications with LLMs through composability"
 optional = false
 python-versions = "<4.0,>=3.8.1"
 files = [
-    {file = "langchain_core-0.1.44-py3-none-any.whl", hash = "sha256:d8772dccef95fc97bfa2dcd19412e620ebe14def1f0e218374971f6e30a46a49"},
-    {file = "langchain_core-0.1.44.tar.gz", hash = "sha256:e313975d9ae2926342e6f2ad760338d31f18b1223e9b8b4dc408daeeade46a83"},
+    {file = "langchain_core-0.1.45-py3-none-any.whl", hash = "sha256:91eff20de0bcf5f025e1d8c4582cb597a9c17527965eb03b314486e7c834e7df"},
+    {file = "langchain_core-0.1.45.tar.gz", hash = "sha256:526532c1af279a9e2debe7a4e143ba6e980cf90b5ab2e0991c2230ee04c693e2"},
 ]
 
 [package.dependencies]
@@ -2205,35 +2208,36 @@ reference = ["Pillow", "google-re2"]
 
 [[package]]
 name = "onnxruntime"
-version = "1.15.1"
+version = "1.17.3"
 description = "ONNX Runtime is a runtime accelerator for Machine Learning models"
 optional = false
 python-versions = "*"
 files = [
-    {file = "onnxruntime-1.15.1-cp310-cp310-macosx_10_15_x86_64.whl", hash = "sha256:baad59e6a763237fa39545325d29c16f98b8a45d2dfc524c67631e2e3ba44d16"},
-    {file = "onnxruntime-1.15.1-cp310-cp310-macosx_11_0_arm64.whl", hash = "sha256:568c2db848f619a0a93e843c028e9fb4879929d40b04bd60f9ba6eb8d2e93421"},
-    {file = "onnxruntime-1.15.1-cp310-cp310-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:69088d7784bb04dedfd9e883e2c96e4adf8ae0451acdd0abb78d68f59ecc6d9d"},
-    {file = "onnxruntime-1.15.1-cp310-cp310-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:3cef43737b2cd886d5d718d100f56ec78c9c476c5db5f8f946e95024978fe754"},
-    {file = "onnxruntime-1.15.1-cp310-cp310-win32.whl", hash = "sha256:79d7e65abb44a47c633ede8e53fe7b9756c272efaf169758c482c983cca98d7e"},
-    {file = "onnxruntime-1.15.1-cp310-cp310-win_amd64.whl", hash = "sha256:8bc4c47682933a7a2c79808688aad5f12581305e182be552de50783b5438e6bd"},
-    {file = "onnxruntime-1.15.1-cp311-cp311-macosx_10_15_x86_64.whl", hash = "sha256:652b2cb777f76446e3cc41072dd3d1585a6388aeff92b9de656724bc22e241e4"},
-    {file = "onnxruntime-1.15.1-cp311-cp311-macosx_11_0_arm64.whl", hash = "sha256:89b86dbed15740abc385055a29c9673a212600248d702737ce856515bdeddc88"},
-    {file = "onnxruntime-1.15.1-cp311-cp311-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:ed5cdd9ee748149a57f4cdfa67187a0d68f75240645a3c688299dcd08742cc98"},
-    {file = "onnxruntime-1.15.1-cp311-cp311-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:2f748cce6a70ed38c19658615c55f4eedb9192765a4e9c4bd2682adfe980698d"},
-    {file = "onnxruntime-1.15.1-cp311-cp311-win32.whl", hash = "sha256:e0312046e814c40066e7823da58075992d51364cbe739eeeb2345ec440c3ac59"},
-    {file = "onnxruntime-1.15.1-cp311-cp311-win_amd64.whl", hash = "sha256:f0980969689cb956c22bd1318b271e1be260060b37f3ddd82c7d63bd7f2d9a79"},
-    {file = "onnxruntime-1.15.1-cp38-cp38-macosx_10_15_x86_64.whl", hash = "sha256:345986cfdbd6f4b20a89b6a6cd9abd3e2ced2926ae0b6e91fefa8149f95c0f09"},
-    {file = "onnxruntime-1.15.1-cp38-cp38-macosx_11_0_arm64.whl", hash = "sha256:a4d7b3ad75e040f1e95757f69826a11051737b31584938a26d466a0234c6de98"},
-    {file = "onnxruntime-1.15.1-cp38-cp38-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:3603d07b829bcc1c14963a76103e257aade8861eb208173b300cc26e118ec2f8"},
-    {file = "onnxruntime-1.15.1-cp38-cp38-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:d3df0625b9295daf1f7409ea55f72e1eeb38d54f5769add53372e79ddc3cf98d"},
-    {file = "onnxruntime-1.15.1-cp38-cp38-win32.whl", hash = "sha256:f68b47fdf1a0406c0292f81ac993e2a2ae3e8b166b436d590eb221f64e8e187a"},
-    {file = "onnxruntime-1.15.1-cp38-cp38-win_amd64.whl", hash = "sha256:52d762d297cc3f731f54fa65a3e329b813164970671547bef6414d0ed52765c9"},
-    {file = "onnxruntime-1.15.1-cp39-cp39-macosx_10_15_x86_64.whl", hash = "sha256:99228f9f03dc1fc8af89a28c9f942e8bd3e97e894e263abe1a32e4ddb1f6363b"},
-    {file = "onnxruntime-1.15.1-cp39-cp39-macosx_11_0_arm64.whl", hash = "sha256:45db7f96febb0cf23e3af147f35c4f8de1a37dd252d1cef853c242c2780250cd"},
-    {file = "onnxruntime-1.15.1-cp39-cp39-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:2bafc112a36db25c821b90ab747644041cb4218f6575889775a2c12dd958b8c3"},
-    {file = "onnxruntime-1.15.1-cp39-cp39-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:985693d18f2d46aa34fd44d7f65ff620660b2c8fa4b8ec365c2ca353f0fbdb27"},
-    {file = "onnxruntime-1.15.1-cp39-cp39-win32.whl", hash = "sha256:708eb31b0c04724bf0f01c1309a9e69bbc09b85beb750e5662c8aed29f1ff9fd"},
-    {file = "onnxruntime-1.15.1-cp39-cp39-win_amd64.whl", hash = "sha256:73d6de4c42dfde1e9dbea04773e6dc23346c8cda9c7e08c6554fafc97ac60138"},
+    {file = "onnxruntime-1.17.3-cp310-cp310-macosx_11_0_universal2.whl", hash = "sha256:d86dde9c0bb435d709e51bd25991c9fe5b9a5b168df45ce119769edc4d198b15"},
+    {file = "onnxruntime-1.17.3-cp310-cp310-manylinux_2_27_aarch64.manylinux_2_28_aarch64.whl", hash = "sha256:9d87b68bf931ac527b2d3c094ead66bb4381bac4298b65f46c54fe4d1e255865"},
+    {file = "onnxruntime-1.17.3-cp310-cp310-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:26e950cf0333cf114a155f9142e71da344d2b08dfe202763a403ae81cc02ebd1"},
+    {file = "onnxruntime-1.17.3-cp310-cp310-win32.whl", hash = "sha256:0962a4d0f5acebf62e1f0bf69b6e0adf16649115d8de854c1460e79972324d68"},
+    {file = "onnxruntime-1.17.3-cp310-cp310-win_amd64.whl", hash = "sha256:468ccb8a0faa25c681a41787b1594bf4448b0252d3efc8b62fd8b2411754340f"},
+    {file = "onnxruntime-1.17.3-cp311-cp311-macosx_11_0_universal2.whl", hash = "sha256:e8cd90c1c17d13d47b89ab076471e07fb85467c01dcd87a8b8b5cdfbcb40aa51"},
+    {file = "onnxruntime-1.17.3-cp311-cp311-manylinux_2_27_aarch64.manylinux_2_28_aarch64.whl", hash = "sha256:a058b39801baefe454eeb8acf3ada298c55a06a4896fafc224c02d79e9037f60"},
+    {file = "onnxruntime-1.17.3-cp311-cp311-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:2f823d5eb4807007f3da7b27ca972263df6a1836e6f327384eb266274c53d05d"},
+    {file = "onnxruntime-1.17.3-cp311-cp311-win32.whl", hash = "sha256:b66b23f9109e78ff2791628627a26f65cd335dcc5fbd67ff60162733a2f7aded"},
+    {file = "onnxruntime-1.17.3-cp311-cp311-win_amd64.whl", hash = "sha256:570760ca53a74cdd751ee49f13de70d1384dcf73d9888b8deac0917023ccda6d"},
+    {file = "onnxruntime-1.17.3-cp312-cp312-macosx_11_0_universal2.whl", hash = "sha256:77c318178d9c16e9beadd9a4070d8aaa9f57382c3f509b01709f0f010e583b99"},
+    {file = "onnxruntime-1.17.3-cp312-cp312-manylinux_2_27_aarch64.manylinux_2_28_aarch64.whl", hash = "sha256:23da8469049b9759082e22c41a444f44a520a9c874b084711b6343672879f50b"},
+    {file = "onnxruntime-1.17.3-cp312-cp312-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:2949730215af3f9289008b2e31e9bbef952012a77035b911c4977edea06f3f9e"},
+    {file = "onnxruntime-1.17.3-cp312-cp312-win32.whl", hash = "sha256:6c7555a49008f403fb3b19204671efb94187c5085976ae526cb625f6ede317bc"},
+    {file = "onnxruntime-1.17.3-cp312-cp312-win_amd64.whl", hash = "sha256:58672cf20293a1b8a277a5c6c55383359fcdf6119b2f14df6ce3b140f5001c39"},
+    {file = "onnxruntime-1.17.3-cp38-cp38-macosx_11_0_universal2.whl", hash = "sha256:4395ba86e3c1e93c794a00619ef1aec597ab78f5a5039f3c6d2e9d0695c0a734"},
+    {file = "onnxruntime-1.17.3-cp38-cp38-manylinux_2_27_aarch64.manylinux_2_28_aarch64.whl", hash = "sha256:bdf354c04344ec38564fc22394e1fe08aa6d70d790df00159205a0055c4a4d3f"},
+    {file = "onnxruntime-1.17.3-cp38-cp38-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:a94b600b7af50e922d44b95a57981e3e35103c6e3693241a03d3ca204740bbda"},
+    {file = "onnxruntime-1.17.3-cp38-cp38-win32.whl", hash = "sha256:5a335c76f9c002a8586c7f38bc20fe4b3725ced21f8ead835c3e4e507e42b2ab"},
+    {file = "onnxruntime-1.17.3-cp38-cp38-win_amd64.whl", hash = "sha256:8f56a86fbd0ddc8f22696ddeda0677b041381f4168a2ca06f712ef6ec6050d6d"},
+    {file = "onnxruntime-1.17.3-cp39-cp39-macosx_11_0_universal2.whl", hash = "sha256:e0ae39f5452278cd349520c296e7de3e90d62dc5b0157c6868e2748d7f28b871"},
+    {file = "onnxruntime-1.17.3-cp39-cp39-manylinux_2_27_aarch64.manylinux_2_28_aarch64.whl", hash = "sha256:3ff2dc012bd930578aff5232afd2905bf16620815f36783a941aafabf94b3702"},
+    {file = "onnxruntime-1.17.3-cp39-cp39-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:cf6c37483782e4785019b56e26224a25e9b9a35b849d0169ce69189867a22bb1"},
+    {file = "onnxruntime-1.17.3-cp39-cp39-win32.whl", hash = "sha256:351bf5a1140dcc43bfb8d3d1a230928ee61fcd54b0ea664c8e9a889a8e3aa515"},
+    {file = "onnxruntime-1.17.3-cp39-cp39-win_amd64.whl", hash = "sha256:57a3de15778da8d6cc43fbf6cf038e1e746146300b5f0b1fbf01f6f795dc6440"},
 ]
 
 [package.dependencies]
@@ -2262,9 +2266,9 @@ files = [
 
 [package.dependencies]
 numpy = [
+    {version = ">=1.23.5", markers = "python_version >= \"3.11\""},
     {version = ">=1.21.4", markers = "python_version >= \"3.10\" and platform_system == \"Darwin\" and python_version < \"3.11\""},
     {version = ">=1.21.2", markers = "platform_system != \"Darwin\" and python_version >= \"3.10\" and python_version < \"3.11\""},
-    {version = ">=1.23.5", markers = "python_version >= \"3.11\""},
 ]
 
 [[package]]
@@ -2304,6 +2308,20 @@ async = ["aiohttp (>=3,<4)"]
 develop = ["black", "botocore", "coverage (<8.0.0)", "jinja2", "mock", "myst-parser", "pytest (>=3.0.0)", "pytest-cov", "pytest-mock (<4.0.0)", "pytz", "pyyaml", "requests (>=2.0.0,<3.0.0)", "sphinx", "sphinx-copybutton", "sphinx-rtd-theme"]
 docs = ["aiohttp (>=3,<4)", "myst-parser", "sphinx", "sphinx-copybutton", "sphinx-rtd-theme"]
 kerberos = ["requests-kerberos"]
+
+[[package]]
+name = "ordered-set"
+version = "4.1.0"
+description = "An OrderedSet is a custom MutableSet that remembers its order, so that every"
+optional = false
+python-versions = ">=3.7"
+files = [
+    {file = "ordered-set-4.1.0.tar.gz", hash = "sha256:694a8e44c87657c59292ede72891eb91d34131f6531463aab3009191c77364a8"},
+    {file = "ordered_set-4.1.0-py3-none-any.whl", hash = "sha256:046e1132c71fcf3330438a539928932caf51ddbc582496833e23de611de14562"},
+]
+
+[package.extras]
+dev = ["black", "mypy", "pytest"]
 
 [[package]]
 name = "orjson"
@@ -2413,8 +2431,8 @@ files = [
 
 [package.dependencies]
 numpy = [
-    {version = ">=1.22.4", markers = "python_version < \"3.11\""},
     {version = ">=1.23.2", markers = "python_version == \"3.11\""},
+    {version = ">=1.22.4", markers = "python_version < \"3.11\""},
 ]
 python-dateutil = ">=2.8.2"
 pytz = ">=2020.1"
@@ -4190,13 +4208,13 @@ files = [
 
 [[package]]
 name = "unstructured"
-version = "0.13.2"
+version = "0.13.3"
 description = "A library that prepares raw documents for downstream ML tasks."
 optional = false
 python-versions = "<3.12,>=3.9.0"
 files = [
-    {file = "unstructured-0.13.2-py3-none-any.whl", hash = "sha256:eff6ff6e0729b31decf5babf18413cb60038921227cd6c3a1edc334f13becea6"},
-    {file = "unstructured-0.13.2.tar.gz", hash = "sha256:f2ed56bffce46dc1e77ab13732a6d6ff989a7793df0ccc64bb63e58af242aa39"},
+    {file = "unstructured-0.13.3-py3-none-any.whl", hash = "sha256:852f8db24d82568fbd26c0a90ab85803d2dcb507f8b64a56932455a46b543422"},
+    {file = "unstructured-0.13.3.tar.gz", hash = "sha256:190b51fbd282602e68b44708798dedd85479a718e4e50a300f12abaa5643df32"},
 ]
 
 [package.dependencies]
@@ -4230,15 +4248,15 @@ rapidfuzz = "*"
 requests = "*"
 tabulate = "*"
 typing-extensions = "*"
-unstructured-client = "<=0.18.0"
-unstructured-inference = {version = "0.7.25", optional = true, markers = "extra == \"all-docs\""}
+unstructured-client = "*"
+unstructured-inference = {version = "0.7.27", optional = true, markers = "extra == \"all-docs\""}
 "unstructured.pytesseract" = {version = ">=0.3.12", optional = true, markers = "extra == \"all-docs\""}
 wrapt = "*"
 xlrd = {version = "*", optional = true, markers = "extra == \"all-docs\""}
 
 [package.extras]
 airtable = ["pyairtable"]
-all-docs = ["markdown", "msg-parser", "networkx", "onnx", "openpyxl", "pandas", "pdf2image", "pdfminer.six", "pikepdf", "pillow-heif", "pypandoc", "pypdf", "python-docx", "python-pptx (<=0.6.23)", "unstructured-inference (==0.7.25)", "unstructured.pytesseract (>=0.3.12)", "xlrd"]
+all-docs = ["markdown", "msg-parser", "networkx", "onnx", "openpyxl", "pandas", "pdf2image", "pdfminer.six", "pikepdf", "pillow-heif", "pypandoc", "pypdf", "python-docx", "python-pptx (<=0.6.23)", "unstructured-inference (==0.7.27)", "unstructured.pytesseract (>=0.3.12)", "xlrd"]
 astra = ["astrapy"]
 azure = ["adlfs", "fsspec"]
 azure-cognitive-search = ["azure-search-documents"]
@@ -4266,9 +4284,9 @@ gitlab = ["python-gitlab"]
 google-drive = ["google-api-python-client"]
 hubspot = ["hubspot-api-client", "urllib3"]
 huggingface = ["langdetect", "sacremoses", "sentencepiece", "torch", "transformers"]
-image = ["onnx", "pdf2image", "pdfminer.six", "pikepdf", "pillow-heif", "pypdf", "unstructured-inference (==0.7.25)", "unstructured.pytesseract (>=0.3.12)"]
+image = ["onnx", "pdf2image", "pdfminer.six", "pikepdf", "pillow-heif", "pypdf", "unstructured-inference (==0.7.27)", "unstructured.pytesseract (>=0.3.12)"]
 jira = ["atlassian-python-api"]
-local-inference = ["markdown", "msg-parser", "networkx", "onnx", "openpyxl", "pandas", "pdf2image", "pdfminer.six", "pikepdf", "pillow-heif", "pypandoc", "pypdf", "python-docx", "python-pptx (<=0.6.23)", "unstructured-inference (==0.7.25)", "unstructured.pytesseract (>=0.3.12)", "xlrd"]
+local-inference = ["markdown", "msg-parser", "networkx", "onnx", "openpyxl", "pandas", "pdf2image", "pdfminer.six", "pikepdf", "pillow-heif", "pypandoc", "pypdf", "python-docx", "python-pptx (<=0.6.23)", "unstructured-inference (==0.7.27)", "unstructured.pytesseract (>=0.3.12)", "xlrd"]
 md = ["markdown"]
 mongodb = ["pymongo"]
 msg = ["msg-parser"]
@@ -4280,7 +4298,7 @@ opensearch = ["opensearch-py"]
 org = ["pypandoc"]
 outlook = ["Office365-REST-Python-Client", "msal"]
 paddleocr = ["unstructured.paddleocr (==2.6.1.3)"]
-pdf = ["onnx", "pdf2image", "pdfminer.six", "pikepdf", "pillow-heif", "pypdf", "unstructured-inference (==0.7.25)", "unstructured.pytesseract (>=0.3.12)"]
+pdf = ["onnx", "pdf2image", "pdfminer.six", "pikepdf", "pillow-heif", "pypdf", "unstructured-inference (==0.7.27)", "unstructured.pytesseract (>=0.3.12)"]
 pinecone = ["pinecone-client (==2.2.4)"]
 postgres = ["psycopg2-binary"]
 ppt = ["python-pptx (<=0.6.23)"]
@@ -4301,24 +4319,26 @@ xlsx = ["networkx", "openpyxl", "pandas", "xlrd"]
 
 [[package]]
 name = "unstructured-client"
-version = "0.18.0"
+version = "0.22.0"
 description = "Python Client SDK for Unstructured API"
 optional = false
 python-versions = ">=3.8"
 files = [
-    {file = "unstructured-client-0.18.0.tar.gz", hash = "sha256:b5f1866b6a48d2e28645e37e86c9d58b1ee7df2d88e79adf873572338c027aa8"},
-    {file = "unstructured_client-0.18.0-py3-none-any.whl", hash = "sha256:36d8c5cb01b97a87e271e11d4d5a063d1c5b85fc5fd7f07819c35a9bef74821f"},
+    {file = "unstructured-client-0.22.0.tar.gz", hash = "sha256:d76351c456fcf4067f59135c09a35008a120103621a1ac94cf9448db28ef2e1e"},
+    {file = "unstructured_client-0.22.0-py3-none-any.whl", hash = "sha256:140f7dd8515cc9be3276f66d6fb08d235ea35a50d4eb38a6ef82b60fc3d2fea0"},
 ]
 
 [package.dependencies]
 certifi = ">=2023.7.22"
 charset-normalizer = ">=3.2.0"
-dataclasses-json-speakeasy = ">=0.5.11"
+dataclasses-json = ">=0.6.4"
+deepdiff = ">=6.0"
 idna = ">=3.4"
 jsonpath-python = ">=1.0.6"
 marshmallow = ">=3.19.0"
 mypy-extensions = ">=1.0.0"
 packaging = ">=23.1"
+pypdf = ">=4.0"
 python-dateutil = ">=2.8.2"
 requests = ">=2.31.0"
 six = ">=1.16.0"
@@ -4331,20 +4351,20 @@ dev = ["pylint (==2.16.2)"]
 
 [[package]]
 name = "unstructured-inference"
-version = "0.7.25"
+version = "0.7.27"
 description = "A library for performing inference using trained models."
 optional = false
 python-versions = ">=3.7.0"
 files = [
-    {file = "unstructured_inference-0.7.25-py3-none-any.whl", hash = "sha256:f168532db0aa6c00868d5cb3e763b20e21c27f347b858c84744c1a6459ed0505"},
-    {file = "unstructured_inference-0.7.25.tar.gz", hash = "sha256:c886c2badd833cc192ffefc2f84a6240958bea4fc1c6d8cb8a354a22713c7240"},
+    {file = "unstructured_inference-0.7.27-py3-none-any.whl", hash = "sha256:a56d8b4434cd4e0f14f0293362296de5b4cbf16ba6524c00035e4cc58da6dc90"},
+    {file = "unstructured_inference-0.7.27.tar.gz", hash = "sha256:f1d5a534fb2c125757022d6cb4b2b40f0e0f99f09894ea23b82685f99b88d310"},
 ]
 
 [package.dependencies]
 huggingface-hub = "*"
 layoutparser = {version = "*", extras = ["layoutmodels", "tesseract"]}
 onnx = "*"
-onnxruntime = "<1.16"
+onnxruntime = ">=1.17.0"
 opencv-python = "!=4.7.0.68"
 python-multipart = "*"
 rapidfuzz = "*"
