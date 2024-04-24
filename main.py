@@ -1,7 +1,7 @@
 import os
+import chromadb
 from dotenv import load_dotenv
 
-from elasticsearch import Elasticsearch
 from langchain_community.embeddings.ollama import OllamaEmbeddings
 from langchain_community.chat_models.ollama import ChatOllama
 from langchain_core.documents import Document
@@ -11,18 +11,15 @@ from langchain_core.runnables import (
     RunnableParallel,
     RunnablePassthrough,
 )
-from langchain_experimental.text_splitter import SemanticChunker
-from langchain_elasticsearch import ElasticsearchStore
 from langchain_community.cross_encoders import HuggingFaceCrossEncoder
-from langchain.retrievers import ContextualCompressionRetriever
 from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
 from langchain_core.output_parsers import StrOutputParser
 from transformers import Blip2Processor, Blip2ForConditionalGeneration
-from unstructured.partition.auto import detect_filetype, FileType
 
-from uni_ir.reranker import CrossEncoderReranker
 from uni_ir.load import ImageCaptioner, DocumentLoader
-from uni_ir.utils.formatting import format_docs, format_query, pretty_print_docs
+from uni_ir.index import LexicalIndex, VectorIndex
+from uni_ir.retrieve import Reranker
+from uni_ir.utils.formatting import format_docs, pretty_print_docs
 from uni_ir.utils.prompt import CONTEXTUAL_PROMPT, RAG_PROMPT
 
 load_dotenv()
@@ -35,12 +32,9 @@ embeddings = OllamaEmbeddings(
     model=os.getenv("EMBEDDING_MODEL") or "mxbai-embed-large",
     base_url=os.getenv("EMBEDDING_URL") or "http://localhost:11434",
 )
-# cross_encoder = CrossEncoderReranker(
-#     model=HuggingFaceCrossEncoder(
-#         model_name=os.getenv("CROSS_ENCODER_MODEL") or "BAAI/bge-reranker-v2-m3",
-#     ),
-#     threshold=0.5,
-# )
+
+cross_encoder = HuggingFaceCrossEncoder(model_name="BAAI/bge-reranker-v2-m3")
+
 captioning_processor = Blip2Processor.from_pretrained(
     os.getenv("CAPTIONING_MODEL") or "Salesforce/blip2-opt-2.7b"
 )
@@ -55,30 +49,15 @@ if not isinstance(captioning_model, Blip2ForConditionalGeneration):
     raise ValueError("Invalid captioning model")
 
 image_captioner = ImageCaptioner(captioning_processor, captioning_model)
-# image_captioner = ImageCaptioner(model=captioning_model, processor=captioning_processor)
 document_loader = DocumentLoader(embeddings, image_captioner)
 
-# es_client = Elasticsearch(
-#     [os.getenv("ELASTIC_URL") or "https://localhost:9200"],
-#     basic_auth=(
-#         os.getenv("ELASTIC_USER") or "",
-#         os.getenv("ELASTIC_PASSWORD") or "",
-#     ),
-#     ca_certs="./ca.crt",
-# )
-# vector_store = ElasticsearchStore(
-#     embedding=embeddings,
-#     index_name=os.getenv("ELASTICSEARCH_INDEX") or "langchain",
-#     es_connection=es_client,
-#     strategy=HybridRetrievalStrategy(rrf=False),
-# )
-#
-# retriever = ContextualCompressionRetriever(
-#     base_compressor=cross_encoder,
-#     base_retriever=vector_store.as_retriever(search_kwargs={"k": 25, "fetch_k": 100}),
-# )
-#
-#
+chroma_client = chromadb.Client()
+chroma_collection = chroma_client.create_collection("langchain")
+vector_store = VectorIndex(chroma_collection, embeddings)
+
+reranker = Reranker(cross_encoder, 0.5)
+
+
 # rag_prompt = ChatPromptTemplate.from_messages(
 #     [
 #         ("system", RAG_PROMPT),
@@ -99,18 +78,16 @@ document_loader = DocumentLoader(embeddings, image_captioner)
 def create_index():
     # if vector_store.client.indices.exists(index=vector_store.index_name):
     # return
+    docs = []
+
     for filename in os.listdir("./docs"):
-        filetype = detect_filetype(filename)
-
-        if filetype in [FileType.UNK, FileType.EMPTY]:
-            continue
-
-        print(f"Loading {filename}...")
+        print(f"\nLoading {filename}...")
         with open(f"./docs/{filename}", "rb") as file:
-            docs = document_loader.load(file, filename)
+            docs.extend(document_loader.load(file, filename))
 
-        pretty_print_docs(docs)
-        # vector_store.add_documents(list(docs))
+    return LexicalIndex(docs).as_retriever()
+
+    # vector_store.add_documents(list(docs))
 
 
 # def create_chain():
@@ -145,8 +122,11 @@ def main():
 
 
 if __name__ == "__main__":
-    create_index()
-    main()
+    retriever = create_index()
+    docs = retriever.invoke(
+        "PROMETHEE I how to calculate comprehensive preference index"
+    )
+    pretty_print_docs(docs)
     # create_index()
     # chain = create_chain()
     # chat_history = []
