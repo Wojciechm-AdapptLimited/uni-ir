@@ -1,14 +1,17 @@
-import base64
 import os
 import re
 import numpy as np
+import json
 
-from io import BytesIO
-from typing import IO, Any
+from typing import IO
 from dataclasses import dataclass
-from PIL import Image as PILImage
-from transformers import Blip2ForConditionalGeneration, Blip2Processor, TensorType
-from unstructured.partition.auto import partition, PartitionStrategy
+
+from unstructured.partition.auto import (
+    partition,
+    PartitionStrategy,
+    detect_filetype,
+    FileType,
+)
 from unstructured.documents.elements import (
     Element,
     Table,
@@ -16,41 +19,17 @@ from unstructured.documents.elements import (
 )
 from unstructured.cleaners.core import clean
 from unstructured.partition.text_type import sent_tokenize
-from langchain_core.documents import Document
 from langchain_core.embeddings import Embeddings
-from unstructured.staging.base import elements_from_json, elements_to_json
+from langchain_core.documents import Document
 from sklearn.metrics.pairwise import cosine_similarity
+
+from uni_ir.load import ImageCaptioner
 
 
 @dataclass
 class Text:
     content: str
-    page_number: int
-
-
-class ImageCaptioner:
-    def __init__(self, processor: Blip2Processor, model: Blip2ForConditionalGeneration):
-        self.processor = processor
-        self.model = model
-
-    def caption(
-        self,
-        payload: str,
-    ) -> str:
-        if not payload:
-            return ""
-
-        content = PILImage.open(BytesIO(base64.b64decode(payload))).convert("RGB")
-
-        inputs = self.processor(
-            content, "an image of", return_tensors=TensorType.PYTORCH
-        )
-
-        outputs = self.model.generate(
-            inputs.pixel_values, inputs.input_ids, inputs.attention_mask
-        )
-
-        return self.processor.decode(outputs[0], skip_special_tokens=True).strip()
+    section: str | None
 
 
 class DocumentLoader:
@@ -68,37 +47,58 @@ class DocumentLoader:
         self.chunking_percentile = chunking_percentile
         self.min_chunk_size = min_chunk_size
 
-    def load(self, file: IO[bytes], filename: str | None = None) -> list[Document]:
-        cache_path = f"{filename}.elements.json"
+    def load(self, file: IO[bytes], filename: str) -> list[Document]:
+        filetype = detect_filetype(filename)
+
+        if not filetype or filetype in [FileType.UNK, FileType.EMPTY]:
+            return []
+
+        cache_path = f"./cache/{filename}.parsed.json"
 
         if os.path.exists(cache_path):
-            elements = elements_from_json(cache_path)
-        else:
-            elements = partition(
-                file=file,
-                strategy=PartitionStrategy.HI_RES,
-                languages=self.ocr_languages,
-                model_name="yolox",
-                extract_image_block_types=[Image.__name__],
-                extract_image_block_to_payload=True,
+            with open(cache_path, "r") as f:
+                docs = json.load(f)
+            return [Document(**doc) for doc in docs]
+
+        elements = partition(
+            file=file,
+            strategy=PartitionStrategy.HI_RES,
+            languages=self.ocr_languages,
+            model_name="yolox",
+            extract_image_block_types=[Image.__name__],
+            extract_image_block_to_payload=True,
+            include_page_breaks=True,
+        )
+
+        texts = self._parse(elements)
+        chunks = self._chunk(texts)
+
+        docs = [
+            Document(
+                page_content=chunk.content,
+                metadata={"source": filename, "section": chunk.section},
             )
-            elements_to_json(elements, filename=cache_path)
+            for chunk in chunks
+        ]
 
-        pages = self._parse(elements)
-        docs = self._transform(pages)
-
-        if filename:
-            for doc in docs:
-                doc.metadata.update(_extract(doc.page_content))
-                doc.metadata["source"] = filename
+        with open(cache_path, "w") as f:
+            json.dump(
+                [
+                    {"page_content": doc.page_content, "metadata": doc.metadata}
+                    for doc in docs
+                ],
+                f,
+            )
 
         return docs
 
     def _parse(self, elements: list[Element]) -> list[Text]:
-        pages = {}
+        sections = {}
 
         for element in elements:
+            section = element.metadata.page_number
             text = ""
+
             match element:
                 case Image():
                     payload = element.metadata.image_base64 or ""
@@ -121,21 +121,21 @@ class DocumentLoader:
 
             text += ". "
 
-            if element.metadata.page_number in pages:
-                pages[element.metadata.page_number] += text
+            if section in sections:
+                sections[section] += text
             else:
-                pages[element.metadata.page_number] = text
+                sections[section] = text
 
         return [
             Text(
-                content=page_content,
-                page_number=page_number,
+                text,
+                section,
             )
-            for page_number, page_content in pages.items()
+            for section, text in sections.items()
         ]
 
-    def _transform(self, texts: list[Text]) -> list[Document]:
-        chunks = _chunk(sorted(texts, key=lambda x: x.page_number))
+    def _chunk(self, texts: list[Text]) -> list[Text]:
+        chunks = _chunk(texts)
         embeddings = self.embeddings.embed_documents(
             [chunk.content for chunk in _combine_by_proximity(chunks)]
         )
@@ -145,12 +145,7 @@ class DocumentLoader:
         )
         combined_chunks = _combine_by_size(combined_chunks, self.min_chunk_size)
 
-        return [
-            Document(
-                page_content=chunk.content, metadata={"page_number": chunk.page_number}
-            )
-            for chunk in combined_chunks
-        ]
+        return combined_chunks
 
 
 def _chunk(texts: list[Text]) -> list[Text]:
@@ -160,10 +155,7 @@ def _chunk(texts: list[Text]) -> list[Text]:
         sentences = _split(text.content)
 
         for sentence in sentences:
-            chunk = Text(
-                content=sentence,
-                page_number=text.page_number,
-            )
+            chunk = Text(content=sentence, section=text.section)
             chunks.append(chunk)
 
     return chunks
@@ -174,12 +166,12 @@ def _combine_by_proximity(chunks: list[Text], buffer_size=1) -> list[Text]:
 
     for i, chunk in enumerate(chunks):
         combined_sentence = ""
-        page_number = None
+        section = None
 
         for j in range(i - buffer_size, i):
             if j < 0:
                 continue
-            page_number = page_number or chunks[j].page_number
+            section = section or chunks[j].section
             combined_sentence += chunks[j].content
 
         combined_sentence += chunk.content
@@ -192,7 +184,7 @@ def _combine_by_proximity(chunks: list[Text], buffer_size=1) -> list[Text]:
         combined_chunks.append(
             Text(
                 content=combined_sentence,
-                page_number=page_number or chunk.page_number,
+                section=section or chunk.section,
             )
         )
 
@@ -216,7 +208,7 @@ def _combine_by_similarity(
         combined_sentence = " ".join([c.content for c in group])
 
         combined_chunks.append(
-            Text(content=combined_sentence, page_number=group[0].page_number)
+            Text(content=combined_sentence, section=group[0].section)
         )
 
         start_idx = breakpoint_idx + 1
@@ -225,7 +217,7 @@ def _combine_by_similarity(
         group = chunks[start_idx:]
         combined_sentence = " ".join([c.content for c in group])
         combined_chunks.append(
-            Text(content=combined_sentence, page_number=group[0].page_number)
+            Text(content=combined_sentence, section=group[0].section)
         )
 
     return combined_chunks
@@ -241,7 +233,7 @@ def _combine_by_size(chunks: list[Text], min_chunk_size: int) -> list[Text]:
             continue
 
         chunks[i + 1].content = chunks[i].content + " " + chunks[i + 1].content
-        chunks[i + 1].page_number = chunks[i].page_number
+        chunks[i + 1].section = chunks[i].section
 
     if len(chunks[-1].content) >= min_chunk_size or len(combined_chunks) == 0:
         combined_chunks.append(chunks[-1])
@@ -284,8 +276,3 @@ def _split(text: str) -> list[str]:
             sentences.append(table)
 
     return sentences
-
-
-def _extract(text: str) -> dict[str, Any]:
-
-    return {}
