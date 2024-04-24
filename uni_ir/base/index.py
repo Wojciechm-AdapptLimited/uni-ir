@@ -4,7 +4,7 @@ from langchain_core.retrievers import BaseRetriever
 from langchain_core.callbacks import CallbackManagerForRetrieverRun
 
 
-class BaseStore(ABC):
+class BaseIndex(ABC):
     docs: list[Document]
 
     @abstractmethod
@@ -12,14 +12,14 @@ class BaseStore(ABC):
         pass
 
     def as_retriever(self, k: int = 5):
-        return StoreBackedRetriever(store=self, k=k)
+        return IndexBackedRetriever(index=self, k=k)
 
 
-class StoreBackedRetriever(BaseRetriever):
-    store: BaseStore
+class IndexBackedRetriever(BaseRetriever):
+    index: BaseIndex
     k: int
 
     def _get_relevant_documents(
         self, query: str, *, run_manager: CallbackManagerForRetrieverRun
     ) -> list[Document]:
-        return self.store.search(query, k=self.k)
+        return self.index.search(query, k=self.k)

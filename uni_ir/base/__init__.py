@@ -1,1 +1,1 @@
-from .store import BaseStore
+from .index import BaseIndex
