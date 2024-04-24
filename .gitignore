@@ -160,5 +160,5 @@ cython_debug/
 #.idea/
 
 docs/*
+cache/*
 .DS_Store
-*.elements.json
