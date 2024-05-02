@@ -3,24 +3,26 @@ from langchain_core.embeddings import Embeddings
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 from chromadb import Collection as ChromaCollection
 
-from uni_ir.base import BaseIndex
+from .base import IndexBackedRetriever
 
 
-class VectorIndex(BaseIndex):
+class VectorIndexBackedRetriever(IndexBackedRetriever):
     collection: ChromaCollection
     embeddings: Embeddings
+    docs: list[Document]
 
     def __init__(
         self,
         collection: ChromaCollection,
         embeddings: Embeddings,
-        docs: list[Document] | None = None,
+        docs: list[Document],
+        k: int,
     ):
         self.collection = collection
         self.embeddings = embeddings
-        self.docs = docs or []
+        self.docs = []
+        self.k = k
 
-    def add_docs(self, docs: list[Document]):
         chunks = []
         metadatas = []
         ids = []
@@ -35,21 +37,32 @@ class VectorIndex(BaseIndex):
             ids.extend([f"{new_idx}_{i}" for i in range(len(doc_chunks))])
             new_idx += 1
 
-        embeddings = self.embeddings.embed_documents(chunks)
+        document_embeddings = self.embeddings.embed_documents(chunks)
 
-        self.collection.add(ids, embeddings, chunks, metadatas)  # type: ignore
+        self.collection.add(ids=ids, embeddings=document_embeddings, documents=chunks, metadatas=metadatas)  # type: ignore
 
-    def search(self, query: str, k: int) -> list[Document]:
-        query_embedding = self.embeddings.embed_query(
-            f"Represent this sentence for searching relevant passages: {query}"
-        )
+    @classmethod
+    def from_docs(
+        cls,
+        collection: ChromaCollection,
+        docs: list[Document],
+        *,
+        embeddings: Embeddings,
+        k: int,
+    ) -> "VectorIndexBackedRetriever":
+        pass
 
-        result = self.collection.query([query_embedding], n_results=k)
+    def _search(self, query: str) -> list[Document]:
+        query_embedding = self.embeddings.embed_query(query)
+        result = self.collection.query([query_embedding], n_results=self.k)
 
         seen = set()
         docs = []
 
-        for metadata in result["metadatas"][0]:  # type: ignore
+        if not result["metadatas"]:
+            return []
+
+        for metadata in result["metadatas"][0]:
             parent_idx = metadata["parent_idx"]
             if isinstance(parent_idx, int) and parent_idx not in seen:
                 seen.add(parent_idx)

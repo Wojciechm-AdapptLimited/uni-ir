@@ -1,1 +1,2 @@
-from .reranker import Reranker
+from .lexical import LexicalIndexBackedRetriever
+from .vector import VectorIndexBackedRetriever
