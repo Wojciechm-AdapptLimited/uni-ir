@@ -18,3 +18,13 @@ def format_query(query: str) -> str:
 
 def format_docs(docs: list[Document]):
     return "\n\n".join(doc.page_content for doc in docs)
+
+
+def to_json(docs: list[Document]):
+    return [
+        {"page_content": doc.page_content, "metadata": doc.metadata} for doc in docs
+    ]
+
+
+def from_json(docs: list[dict]):
+    return [Document(**doc) for doc in docs]
