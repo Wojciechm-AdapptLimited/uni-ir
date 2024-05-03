@@ -1,2 +1,2 @@
 from .lexical import LexicalIndexBackedRetriever
-from .vector import VectorIndexBackedRetriever
+from .vector import DenseRetriever

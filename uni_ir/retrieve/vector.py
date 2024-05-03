@@ -1,28 +1,42 @@
+from langchain_core.callbacks import CallbackManagerForRetrieverRun
 from langchain_core.documents import Document
 from langchain_core.embeddings import Embeddings
 from langchain.text_splitter import RecursiveCharacterTextSplitter
+from langchain_core.retrievers import BaseRetriever
 from chromadb import Collection as ChromaCollection
 
-from .base import IndexBackedRetriever
 
-
-class VectorIndexBackedRetriever(IndexBackedRetriever):
+class DenseRetriever(BaseRetriever):
     collection: ChromaCollection
     embeddings: Embeddings
     docs: list[Document]
+    k: int
 
-    def __init__(
-        self,
+    @classmethod
+    def from_docs(
+        cls,
+        docs: list[Document],
+        *,
         collection: ChromaCollection,
         embeddings: Embeddings,
-        docs: list[Document],
-        k: int,
-    ):
-        self.collection = collection
-        self.embeddings = embeddings
-        self.docs = []
-        self.k = k
+        k: int = 5,
+    ) -> "DenseRetriever":
+        vector_store = cls(collection=collection, embeddings=embeddings, docs=[], k=k)
+        vector_store._add(docs)
+        return vector_store
 
+    @classmethod
+    def from_existing(
+        cls,
+        docs: list[Document],
+        *,
+        collection: ChromaCollection,
+        embeddings: Embeddings,
+        k: int = 5,
+    ) -> "DenseRetriever":
+        return cls(collection=collection, embeddings=embeddings, docs=docs, k=k)
+
+    def _add(self, docs: list[Document]) -> None:
         chunks = []
         metadatas = []
         ids = []
@@ -41,18 +55,9 @@ class VectorIndexBackedRetriever(IndexBackedRetriever):
 
         self.collection.add(ids=ids, embeddings=document_embeddings, documents=chunks, metadatas=metadatas)  # type: ignore
 
-    @classmethod
-    def from_docs(
-        cls,
-        collection: ChromaCollection,
-        docs: list[Document],
-        *,
-        embeddings: Embeddings,
-        k: int,
-    ) -> "VectorIndexBackedRetriever":
-        pass
-
-    def _search(self, query: str) -> list[Document]:
+    def _get_relevant_documents(
+        self, query: str, *, run_manager: CallbackManagerForRetrieverRun
+    ) -> list[Document]:
         query_embedding = self.embeddings.embed_query(query)
         result = self.collection.query([query_embedding], n_results=self.k)
 
