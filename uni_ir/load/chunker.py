@@ -9,6 +9,9 @@ from pydantic import BaseModel
 
 
 class SemanticChunker(BaseModel):
+    class Config:
+        arbitrary_types_allowed = True
+
     embeddings: Embeddings
     combine_buffer_size: int = 1
     chunking_percentile: int = 90

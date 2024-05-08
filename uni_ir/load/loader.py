@@ -13,7 +13,8 @@ from unstructured.cleaners.core import clean
 from langchain_core.documents import Document
 from pydantic import BaseModel
 
-from uni_ir.load import ImageCaptioner, SemanticChunker
+from .captioner import ImageCaptioner
+from .chunker import SemanticChunker
 
 
 class DocumentLoader(BaseModel):
