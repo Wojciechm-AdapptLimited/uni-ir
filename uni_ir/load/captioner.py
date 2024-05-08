@@ -2,16 +2,13 @@ import base64
 
 from io import BytesIO
 from PIL import Image as PILImage
-from pydantic import BaseModel
 from transformers import Blip2ForConditionalGeneration, Blip2Processor, TensorType
 
 
-class ImageCaptioner(BaseModel):
-    class Config:
-        arbitrary_types_allowed = True
-
-    processor: Blip2Processor
-    model: Blip2ForConditionalGeneration
+class ImageCaptioner:
+    def __init__(self, model: Blip2ForConditionalGeneration, processor: Blip2Processor):
+        self.model = model
+        self.processor = processor
 
     def caption(
         self,

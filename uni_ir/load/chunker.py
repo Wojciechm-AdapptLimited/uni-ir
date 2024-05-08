@@ -1,27 +1,32 @@
 import re
 import numpy as np
 
-from langchain_core.documents import Document
 from langchain_core.embeddings import Embeddings
 from sklearn.metrics.pairwise import cosine_similarity
 from unstructured.partition.text_type import sent_tokenize
-from pydantic import BaseModel
+
+from uni_ir.store import Document
 
 
-class SemanticChunker(BaseModel):
-    class Config:
-        arbitrary_types_allowed = True
-
-    embeddings: Embeddings
-    combine_buffer_size: int = 1
-    chunking_percentile: int = 90
-    min_chunk_size: int = 2000
+class SemanticChunker:
+    def __init__(
+        self,
+        embeddings: Embeddings,
+        combine_buffer_size: int = 1,
+        chunking_percentile: int = 90,
+        min_chunk_size: int = 2000,
+    ):
+        self.embeddings = embeddings
+        self.combine_buffer_size = combine_buffer_size
+        self.chunking_percentile = chunking_percentile
+        self.min_chunk_size = min_chunk_size
 
     def chunk(self, documents: list[Document]) -> list[Document]:
-        chunks = [chunk for document in documents for chunk in _split(document)]
+        chunks = [doc for doc in documents]
+        # chunks = [chunk for document in documents for chunk in _split(document)]
         embeddings = self.embeddings.embed_documents(
             [
-                chunk.page_content
+                chunk.content
                 for chunk in _combine_by_proximity(chunks, self.combine_buffer_size)
             ]
         )
@@ -33,8 +38,8 @@ class SemanticChunker(BaseModel):
 
 
 def _split(document: Document) -> list[Document]:
-    tables = re.findall(r"<table.*?>.*?</table>", document.page_content)
-    non_table_content = re.split(r"<table.*?>.*?</table>", document.page_content)
+    tables = re.findall(r"<table.*?>.*?</table>", document.content)
+    non_table_content = re.split(r"<table.*?>.*?</table>", document.content)
     sentences = []
 
     for table, non_table in zip(tables, non_table_content):
@@ -51,8 +56,7 @@ def _split(document: Document) -> list[Document]:
             sentences.append(table)
 
     return [
-        Document(page_content=sentence, metadata=document.metadata)
-        for sentence in sentences
+        Document(content=sentence, metadata=document.metadata) for sentence in sentences
     ]
 
 
@@ -66,21 +70,23 @@ def _combine_by_proximity(chunks: list[Document], buffer_size: int) -> list[Docu
         for j in range(i - buffer_size, i):
             if j < 0:
                 continue
-            section = section or chunks[j].metadata["section"]
-            combined_sentence += chunks[j].page_content
+            section = section or chunks[j].metadata.section
+            combined_sentence += chunks[j].content
 
-        combined_sentence += chunk.page_content
+        combined_sentence += chunk.content
 
         for j in range(i + 1, i + buffer_size + 1):
             if j >= len(chunks):
                 continue
-            combined_sentence += chunks[j].page_content
+            combined_sentence += chunks[j].content
 
-        section = section or chunk.metadata["section"]
+        section = section or chunk.metadata.section
         combined_chunks.append(
             Document(
-                page_content=combined_sentence,
-                metadata=chunk.metadata | {"section": section},
+                content=combined_sentence,
+                metadata=chunk.metadata.model_copy(
+                    update={"section": section}, deep=True
+                ),
             )
         )
 
@@ -91,9 +97,10 @@ def _combine_by_similarity(
     chunks: list[Document], distances: list[float], percentile: int
 ) -> list[Document]:
     def join_chunks(chunks: list[Document]) -> Document:
-        page_content = " ".join([c.page_content for c in chunks])
-        metadata = chunks[0].metadata | {"section": chunks[0].metadata["section"]}
-        return Document(page_content, metadata=metadata)
+        return Document(
+            content=" ".join([c.content for c in chunks]),
+            metadata=chunks[0].metadata.model_copy(deep=True),
+        )
 
     combined_chunks = []
     breakpoint_threshold = np.percentile(distances, percentile)
@@ -121,19 +128,17 @@ def _combine_by_size(chunks: list[Document], size: int) -> list[Document]:
 
     for i in range(len(chunks) - 1):
 
-        if len(chunks[i].page_content) >= size:
+        if len(chunks[i].content) >= size:
             combined_chunks.append(chunks[i])
             continue
 
-        chunks[i + 1].page_content = (
-            chunks[i].page_content + " " + chunks[i + 1].page_content
-        )
-        chunks[i + 1].metadata["section"] = chunks[i].metadata["section"]
+        chunks[i + 1].content = chunks[i].content + " " + chunks[i + 1].content
+        chunks[i + 1].metadata.section = chunks[i].metadata.section
 
-    if len(chunks[-1].page_content) >= size or len(combined_chunks) == 0:
+    if len(chunks[-1].content) >= size or len(combined_chunks) == 0:
         combined_chunks.append(chunks[-1])
     else:
-        combined_chunks[-1].page_content += " " + chunks[-1].page_content
+        combined_chunks[-1].content += " " + chunks[-1].content
 
     return combined_chunks
 
