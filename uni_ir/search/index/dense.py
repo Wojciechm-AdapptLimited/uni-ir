@@ -1,7 +1,9 @@
-from langchain_core.documents import Document
+from uuid import UUID
 from langchain_core.embeddings import Embeddings
 from langchain.text_splitter import TextSplitter
 from chromadb import Collection as ChromaCollection
+
+from uni_ir.store import Document
 
 from .base import BaseIndex
 
@@ -10,58 +12,57 @@ class DenseIndex(BaseIndex):
     collection: ChromaCollection
     embeddings: Embeddings
     child_splitter: TextSplitter
-    docs: list[Document]
 
     def __init__(
         self,
         collection: ChromaCollection,
         embeddings: Embeddings,
         child_splitter: TextSplitter,
-        docs: list[Document] | None = None,
     ) -> None:
-        super().__init__(docs)
         self.collection = collection
         self.embeddings = embeddings
         self.child_splitter = child_splitter
 
-    def search(self, query: str, k: int) -> list[Document]:
+    @classmethod
+    def from_docs(
+        cls,
+        docs: list[Document],
+        collection: ChromaCollection,
+        embeddings: Embeddings,
+        child_splitter: TextSplitter,
+    ) -> "DenseIndex":
+        index = cls(collection, embeddings, child_splitter)
+        index.index(docs)
+        return index
+
+    def search(self, query: str, k: int) -> list[UUID]:
         query_embedding = self.embeddings.embed_query(query)
         result = self.collection.query([query_embedding], n_results=k)
-        # docs = [self.docs[int(id)] for id in result["ids"][0]]
 
         seen = set()
-        docs = []
+        docs: list[UUID] = []
 
         if not result["metadatas"]:
             return []
 
         for metadata in result["metadatas"][0]:
             parent_idx = metadata["parent_idx"]
-            if isinstance(parent_idx, int) and parent_idx not in seen:
+            if isinstance(parent_idx, UUID) and parent_idx not in seen:
                 seen.add(parent_idx)
-                docs.append(self.docs[parent_idx])
+                docs.append(parent_idx)
 
         return docs
 
-    def index(self, docs: list[Document]) -> None:
+    def _index(self, docs: list[Document]) -> None:
         chunks = []
         metadatas = []
         ids = []
-        new_idx = len(self.docs)
-
-        # for doc in docs:
-        #     self.docs.append(doc)
-        #     chunks.append(doc.page_content)
-        #     ids.append(str(new_idx))
-        #     new_idx += 1
 
         for doc in docs:
-            self.docs.append(doc)
-            doc_chunks = self.child_splitter.split_text(doc.page_content)
+            doc_chunks = self.child_splitter.split_text(doc.content)
             chunks.extend(doc_chunks)
-            metadatas.extend([{"parent_idx": new_idx}] * len(doc_chunks))
-            ids.extend([f"{new_idx}_{i}" for i in range(len(doc_chunks))])
-            new_idx += 1
+            metadatas.extend([{"parent_idx": doc.id}] * len(doc_chunks))
+            ids.extend([f"{str(doc.id)}_{i}" for i in range(len(doc_chunks))])
 
         document_embeddings = self.embeddings.embed_documents(chunks)
 
