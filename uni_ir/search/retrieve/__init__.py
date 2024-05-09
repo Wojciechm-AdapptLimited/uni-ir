@@ -1,2 +1,2 @@
-from .index import IndexBackedRetriever
+from .base import BaseRetriever, IndexBackedRetriever
 from .hybrid import HybridRetriever, WeightedRetriever

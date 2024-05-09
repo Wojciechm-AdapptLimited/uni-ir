@@ -1,41 +1,32 @@
-from langchain_core.callbacks.manager import CallbackManagerForRetrieverRun
-from langchain_core.retrievers import BaseRetriever
-from langchain_core.documents import Document
-from langchain_core.runnables import RunnableConfig, patch_config
-from pydantic.v1 import Field
+from uni_ir.store import Document
+from uni_ir.store.filter import Predicate
 
-from .rrf import rff
+from .base import BaseRetriever
+from .fusion import rff
 
 
 class WeightedRetriever(BaseRetriever):
-    retriever: BaseRetriever
-    weight: float = Field(gt=0, lt=1)
+    def __init__(self, retriever: BaseRetriever, weight: float = 1.0):
+        self.retriever = retriever
+        self.weight = weight
 
-    def _get_relevant_documents(
-        self, query: str, *, run_manager: CallbackManagerForRetrieverRun
+    def retrieve(
+        self, query: str, predicate: Predicate | None = None
     ) -> list[Document]:
-        return self.retriever._get_relevant_documents(query, run_manager=run_manager)
+        return self.retriever.retrieve(query, predicate=predicate)
 
 
 class HybridRetriever(BaseRetriever):
-    retrievers: list[WeightedRetriever]
-    c: int = Field(gt=0, default=60)
+    def __init__(self, retrievers: list[WeightedRetriever], c: int = 60):
+        self.retrievers = retrievers
+        self.c = c
 
-    def _get_relevant_documents(
-        self,
-        query: str,
-        *,
-        run_manager: CallbackManagerForRetrieverRun,
-        config: RunnableConfig | None = None,
+    def retrieve(
+        self, query: str, predicate: Predicate | None = None
     ) -> list[Document]:
         rankings = [
-            retriever.invoke(
-                query,
-                patch_config(
-                    config, callbacks=run_manager.get_child(tag=f"retriever_{i+1}")
-                ),
-            )
-            for i, retriever in enumerate(self.retrievers)
+            retriever.retrieve(query, predicate=predicate)
+            for retriever in self.retrievers
         ]
         weights = [retriever.weight for retriever in self.retrievers]
         weights = _normalize_weights(weights)
