@@ -4,7 +4,8 @@ import numpy as np
 from typing import Callable
 from uuid import UUID
 
-from uni_ir.store import Document
+from uni_ir.store import Document, Metadata
+from uni_ir.store.filter import Predicate
 
 from .base import BaseIndex
 
@@ -18,7 +19,8 @@ class LexicalIndex(BaseIndex):
         epsilon: float = 0.25,
     ) -> None:
         self.tokenizer = tokenizer
-        self.corpus = {}
+        self.corpus: dict[UUID, list[str]] = {}
+        self.metadatas: dict[UUID, Metadata] = {}
         self.k1 = k1
         self.b = b
         self.epsilon = epsilon
@@ -39,22 +41,33 @@ class LexicalIndex(BaseIndex):
         index.index(docs)
         return index
 
-    def search(self, query: str, k: int) -> list[UUID]:
+    def search(
+        self, query: str, k: int, predicate: Predicate | None = None
+    ) -> list[UUID]:
         tokens = self.tokenizer(query)
         scores = self._score(tokens)
-        return [doc for doc, _ in scores[:k]]
+        return [
+            doc
+            for doc, _ in scores
+            if predicate is None or predicate(self.metadatas[doc])
+        ][:k]
+
+    def __len__(self) -> int:
+        return len(self.corpus)
 
     def _index(self, docs: list[Document]) -> None:
-        corpus = {doc.id: self.tokenizer(doc.content) for doc in docs if doc.id}
-        self.corpus.update(corpus)
+        for doc in docs:
+            if doc.id is None:
+                continue
 
-        ids: list[UUID] = []
+            self.metadatas[doc.id] = doc.metadata
+            self.corpus[doc.id] = self.tokenizer(doc.content)
+
         dls: list[int] = []
         nd: dict[str, int] = defaultdict(int)
         df: list[dict[str, int]] = []
 
         for doc in self.corpus:
-            ids.append(doc)
             dls.append(len(self.corpus[doc]))
             freq: dict[str, int] = defaultdict(int)
 
@@ -65,18 +78,16 @@ class LexicalIndex(BaseIndex):
             for term in freq:
                 nd[term] += 1
 
-        self.size = len(ids)
-        self.ids = ids
         self.dls = np.array(dls)
-        self.avgdl = np.mean(self.dls) if self.size > 0 else 0
+        self.avgdl = np.mean(self.dls) if len(self) > 0 else 0
         self.df = df
         self.idf = self._calc_idf(nd, self.epsilon)
 
     def _score(self, query: list[str]) -> list[tuple[UUID, float]]:
-        if not self.size:
+        if not len(self):
             return []
 
-        scores = np.zeros(self.size, dtype=np.float64)
+        scores = np.zeros(len(self), dtype=np.float64)
 
         for term in query:
             if term not in self.idf:
@@ -87,17 +98,20 @@ class LexicalIndex(BaseIndex):
             denominator = tf + self.k1 * (1 - self.b + self.b * self.dls / self.avgdl)
             scores += numerator / denominator
 
-        return list(sorted(zip(self.ids, scores), key=lambda x: x[1], reverse=True))
+        return list(
+            sorted(zip(self.corpus.keys(), scores), key=lambda x: x[1], reverse=True)
+        )
 
     def _calc_idf(self, nd: dict[str, int], epsilon: float) -> dict[str, float]:
-        if not self.size:
+        if not len(self):
             return {}
 
         sum_idf = 0
         idf: dict[str, float] = {}
+        size = len(self)
 
         for term in nd:
-            term_idf = np.log((self.size - nd[term] + 0.5) / (nd[term] + 0.5))
+            term_idf = np.log((size - nd[term] + 0.5) / (nd[term] + 0.5))
             idf[term] = term_idf
             sum_idf += term_idf
 
